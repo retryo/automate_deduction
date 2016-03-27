@@ -25,7 +25,8 @@ def remove_html_markup(s):
 the_line      = None    # line number of the executed code
 the_iteration = None    # iteration number
 the_state     = None    # the state of the program and variables
-
+the_diff      = None
+the_input     = None
 # IMPLEMENT THIS !!!
 # This function should trace the function until specified
 # line and iteration, and then record the state of the program in
@@ -38,7 +39,12 @@ def trace_fetch_state(frame, event, arg):
     global the_iteration
     global the_state
 
-    # YOUR CODE HERE
+    if event =='line':
+        if frame.f_lineno==the_line:
+            the_iteration-=1
+            if the_iteration==0:
+                the_state = copy.deepcopy(frame.f_locals)
+    return trace_fetch_state
 
 # This function allows you to get the state of the program
 # at specified line and iteration and return it
@@ -48,7 +54,6 @@ def get_state(somestr, line, iteration):
     global the_line
     global the_iteration
     global the_state
-    
     the_line      = line
     the_iteration = iteration
     
@@ -76,6 +81,7 @@ correct1 = {'quote': False, 's': '"<b>foo</b>"', 'tag': False, 'c': '"', 'out': 
 correct2 = {'quote': True, 's': '"<b>foo</b>"', 'tag': False, 'c': 'b', 'out': '<'}
 
 print "Test results are ",
+print result1
 if result1 == correct1 and result2 == correct2:
     print True, "\n", "Try to submit your exercise"
 elif result1 == correct1:
