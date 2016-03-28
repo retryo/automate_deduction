@@ -19,26 +19,47 @@ def remove_html_markup(s):
             out = out + c
 
     return out
-    
-# These are the global variables you will need for this program
+
+# The delta debugger   
+def ddmin(s):
+    #assert test(s) == "FAIL"
+
+    n = 2     # Initial granularity
+    while len(s) >= 2:
+        start = 0
+        subset_length = len(s) / n
+        some_complement_is_failing = False
+
+        while start < len(s):
+            complement = s[:start] + s[start + subset_length:]
+
+            if test(complement) == "FAIL":
+                s = complement
+                n = max(n - 1, 2)
+                some_complement_is_failing = True
+                break
+                
+            start += subset_length
+
+        if not some_complement_is_failing:
+            if n == len(s):
+                break
+            n = min(n * 2, len(s))
+
+    return s
+ 
+
 # We use these variables to communicate between callbacks and drivers
-the_line      = None    # line number of the executed code
-the_iteration = None    # iteration number
-the_state     = None    # the state of the program and variables
+the_line      = None
+the_iteration = None
+the_state     = None
 the_diff      = None
 the_input     = None
-# IMPLEMENT THIS !!!
-# This function should trace the function until specified
-# line and iteration, and then record the state of the program in
-# the_state variable
-# Stop at the_line/the_iteration and store frame.f_locals in the_state.
-# You can use the following expression to make a copy of frame.f_locals:
-# the_state = copy.deepcopy(frame.f_locals)
+
 def trace_fetch_state(frame, event, arg):
     global the_line
     global the_iteration
     global the_state
-
     if event =='line':
         if frame.f_lineno==the_line:
             the_iteration-=1
@@ -48,46 +69,105 @@ def trace_fetch_state(frame, event, arg):
 
 # This function allows you to get the state of the program
 # at specified line and iteration and return it
-# Complement to the trace_fetch_state function
-# Gets the state at the_line/the_iteration
-def get_state(somestr, line, iteration):
+def get_state(input, line, iteration):
     global the_line
     global the_iteration
     global the_state
+    
     the_line      = line
     the_iteration = iteration
     
     sys.settrace(trace_fetch_state)
-    y = remove_html_markup(somestr)
+    y = remove_html_markup(input)
     sys.settrace(None)
+    
     return the_state
 
 
-# TESTS
-somestr = '"<b>foo</b>"'
+def trace_apply_diff(frame, event, arg):
+    global the_line
+    global the_iteration
+    global the_diff
+    if event =='line':
+        if frame.f_lineno==the_line:
+            the_iteration-=1
+            if the_iteration==0:
+                frame.f_locals.update(the_diff)
 
-# Simple test for line number
-the_line = 16
-the_iteration = 1
-result1 = get_state(somestr, the_line, the_iteration)
+    return trace_apply_diff
+    
+    
+# Testing function: Call remove_html_output, stop at THE_LINE/THE_ITERATION, 
+# and apply the diffs in DIFFS at THE_LINE
+def test(diffs):
+    global the_diff
+    global the_input
+    global the_line
+    global the_iteration
+    
+    line      = the_line
+    iteration = the_iteration
+    
+    the_diff = diffs
+    sys.settrace(trace_apply_diff)
+    y = remove_html_markup(the_input)
+    sys.settrace(None)
 
-# Test to check if you process iterations correctly
-the_line = 16
-the_iteration = 3
-result2 = get_state(somestr, the_line, the_iteration)
+    the_line      = line
+    the_iteration = iteration
 
-# Expected output
-correct1 = {'quote': False, 's': '"<b>foo</b>"', 'tag': False, 'c': '"', 'out': ''}
-correct2 = {'quote': True, 's': '"<b>foo</b>"', 'tag': False, 'c': 'b', 'out': '<'}
+    if y.find('<') == -1:
+        return "PASS"
+    else:
+        return "FAIL"
+        
+html_fail = '"<b>foo</b>"'
+html_pass = "'<b>foo</b>'"
 
-print "Test results are ",
-print result1
-if result1 == correct1 and result2 == correct2:
-    print True, "\n", "Try to submit your exercise"
-elif result1 == correct1:
-    print False, "\n", "Your output is incorrect for the_iteration > 1."
-else:
-    print False, "\n", "Your output is incorrect for given values. \
-                  Please read the supplied comments."
+locations = [(8, 1), (14, 1), (14, 2), (14, 3), (23, 1)]
 
+def auto_cause_chain(locations):
+    global html_fail, html_pass, the_input, the_line, the_iteration, the_diff
+    print "The program was started with", repr(html_fail)
+    
+    for (line, iteration) in locations:
+        # IMPLEMENT THIS !!!
+        # Put the state of variables at the line and iteration
+        # for the passing and the failing runs in the following variables.
+        # HINT: you can use the variables html_pass and html_fail,
+        # and the function you developed earlier - get_state
+        # to achieve that.
+        state_pass = get_state(html_pass,line, iteration)
+        state_fail = get_state(html_fail,line, iteration)
+    
+        # Compute the differences between the passing and failing runs.
+        diffs = []
+        for var in state_fail.keys():
+            if not state_pass.has_key(var) or state_pass[var] != state_fail[var]:
+                diffs.append((var, state_fail[var]))
+ 
+        # Minimizing the failure-inducing set of differences
+        the_input = html_pass
+        the_line  = line
+        the_iteration  = iteration
+        cause = ddmin(diffs)
+        
+        # Pretty output
+        print "Then, in Line " + repr(line) + " (iteration " + repr(iteration) + "),",
+        for (var, value) in cause:
+            print var, 'became', repr(value)
+            
+    print "Then the program failed."
 
+auto_cause_chain(locations)
+
+# The output should look like this:
+"""
+The program was started with '"<b>foo</b>"'
+Then, in Line 8 (iteration 1), s became '"<b>foo</b>"'
+Then, in Line 14 (iteration 1), c became '"'
+Then, in Line 14 (iteration 2), quote became True
+Then, in Line 14 (iteration 3), out became '<'
+Then, in Line 23 (iteration 1), out became '<b>foo</b>'
+Then the program failed.
+"""
