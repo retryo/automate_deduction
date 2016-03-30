@@ -65,11 +65,17 @@ def ddmin(s):
 
 # Use this function to record the covered lines in the program, in order of
 # their execution and save in the list coverage
-coverage = []
+coverage ={}
 def traceit(frame, event, arg):
     global coverage
-
-    # YOUR CODE HERE
+    fs = frame.f_code.co_filename
+    ln = frame.f_lineno
+    if event =='line':
+        if fs not in coverage:
+            coverage[fs]={}
+        if ln not in coverage[fs]:
+            coverage[fs][ln]=0
+        coverage[fs][ln]+=1
         
     return traceit
 
@@ -153,6 +159,11 @@ def make_locations(coverage):
     # This function should return a list of tuples in the format
     # [(line, iteration), (line, iteration) ...], as auto_cause_chain
     # expects.
+    locations=[]
+    for func, line in coverage.iteritems():
+        for ln in line:
+            locations.append((ln,coverage[func][ln]))
+
     return locations
 
 def auto_cause_chain(locations):
@@ -195,13 +206,14 @@ html_pass = "'<b>foo</b>'"
 
 # This will fill the coverage variable with all lines executed in a
 # failing run
-coverage = []
+coverage = {}
 sys.settrace(traceit)
 remove_html_markup(html_fail)
 sys.settrace(None)
 
 locations = make_locations(coverage)
-auto_cause_chain(locations)
+print locations
+#auto_cause_chain(locations)
 
 # The coverage :
 # [8, 9, 10, 11, 12, 14, 16, 17, 11, 12... # and so on
