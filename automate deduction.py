@@ -13,7 +13,8 @@
 # See some hints at the provided functions, and an example output at the end.
 import sys
 import copy
-
+import time
+start_time=time.time()
 #buggy program
 def remove_html_markup(s):
     tag   = False
@@ -37,6 +38,7 @@ def ddmin(s):
     # you may need to use this to test if the values you pass actually make
     # test fail.
     assert test(s) == "FAIL"
+    
     n = 2     # Initial granularity
     while len(s) >= 2:
         start = 0
@@ -170,8 +172,8 @@ def auto_cause_chain(locations):
     # Test over multiple locations
     causes =[]
     cause_check={}
+    diff_check={}
     for (line, iteration) in locations:
-
         # Get the passing and the failing state
         state_pass = get_state(html_pass, line, iteration)
         state_fail = get_state(html_fail, line, iteration)
@@ -197,9 +199,12 @@ def auto_cause_chain(locations):
         the_line  = line
         the_iteration  = iteration
         try: 
+            t_diffs =tuple(diffs)
+            if t_diffs in diff_check:
+                continue
             cause = ddmin(diffs)
-
             if cause!=None:
+                diff_check[t_diffs]=True
                 for c in cause:
                     if c not in cause_check:
                         cause_check[c]=True
@@ -230,9 +235,9 @@ remove_html_markup(html_fail)
 sys.settrace(None)
 
 locations = make_locations(coverage)
-print locations
-auto_cause_chain(locations)
 
+auto_cause_chain(locations)
+print("--- %s seconds ---" % (time.time() - start_time))
 # The coverage :
 # [8, 9, 10, 11, 12, 14, 16, 17, 11, 12... # and so on
 # The locations:
