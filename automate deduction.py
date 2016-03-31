@@ -169,8 +169,9 @@ def make_locations(coverage):
 def auto_cause_chain(locations):
     global html_fail, html_pass, the_input, the_line, the_iteration, the_diff
     print "The program was started with", repr(html_fail)
-
+    #print locations
     # Test over multiple locations
+    causes =[]
     for (line, iteration) in locations:
 
         # Get the passing and the failing state
@@ -179,10 +180,16 @@ def auto_cause_chain(locations):
     
         # Compute the differences
         diffs = []
-        for var in state_fail.keys():
-            if not state_pass.has_key(var) or state_pass[var] != state_fail[var]:
+        #print state_pass
+        #print state_fail,'\n\n'
+        if state_pass is None:
+            state_pass={}
+        if state_fail is None:
+            state_pass={}
+
+        for var in state_fail:
+            if (var not in state_pass) or state_pass[var] != state_fail[var]:
                 diffs.append((var, state_fail[var]))
- 
         # Minimize the failure-inducing set of differences
         # Since this time you have all the covered lines and iterations in
         # locations, you will have to figure out how to automatically detect
@@ -191,11 +198,26 @@ def auto_cause_chain(locations):
         the_input = html_pass
         the_line  = line
         the_iteration  = iteration
+        try: 
+            cause = ddmin(diffs)
+            if cause!=None:
+                for c in cause:
+                    if c not in causes:
+                        causes.append(c)
+                #for var,val in cause:
+                #   print "Then", var, "became", repr(val)
+                #print "Then", cause, "became", repr(value)
+                #print "Then", var, "became", repr(value)
+        except AssertionError:
+            pass
         # You will have to use the following functions and output formatting:
-        #    cause = ddmin(diffs)
+        #   cause = ddmin(diffs)
         #    # Pretty output
         #    print "Then", var, "became", repr(value)
-            
+
+    for var,val in causes:
+        #print var[0], val[1]
+        print "Then", var, "became", repr(val)
     print "Then the program failed."
 
 ###### Testing runs
@@ -212,8 +234,8 @@ remove_html_markup(html_fail)
 sys.settrace(None)
 
 locations = make_locations(coverage)
-print locations
-#auto_cause_chain(locations)
+
+auto_cause_chain(locations)
 
 # The coverage :
 # [8, 9, 10, 11, 12, 14, 16, 17, 11, 12... # and so on
