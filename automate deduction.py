@@ -37,7 +37,6 @@ def ddmin(s):
     # you may need to use this to test if the values you pass actually make
     # test fail.
     assert test(s) == "FAIL"
-
     n = 2     # Initial granularity
     while len(s) >= 2:
         start = 0
@@ -170,6 +169,7 @@ def auto_cause_chain(locations):
     #print locations
     # Test over multiple locations
     causes =[]
+    cause_check={}
     for (line, iteration) in locations:
 
         # Get the passing and the failing state
@@ -198,14 +198,12 @@ def auto_cause_chain(locations):
         the_iteration  = iteration
         try: 
             cause = ddmin(diffs)
+
             if cause!=None:
                 for c in cause:
-                    if c not in causes:
+                    if c not in cause_check:
+                        cause_check[c]=True
                         causes.append(c)
-                #for var,val in cause:
-                #   print "Then", var, "became", repr(val)
-                #print "Then", cause, "became", repr(value)
-                #print "Then", var, "became", repr(value)
         except AssertionError:
             pass
         # You will have to use the following functions and output formatting:
@@ -232,7 +230,7 @@ remove_html_markup(html_fail)
 sys.settrace(None)
 
 locations = make_locations(coverage)
-
+print locations
 auto_cause_chain(locations)
 
 # The coverage :
