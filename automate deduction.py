@@ -1,16 +1,4 @@
 #!/usr/bin/env python
-# INSTRUCTIONS
-# Your task for this assignment is to combine the principles that you learned 
-# in unit 3, 4 and 5 and create a fully automated program that can display
-# the cause-effect chain automatically.
-# In problem set 4 you created a program that generated cause chain
-# if you provided it the locations (line and iteration number) to look at.
-# That is not very useful. If you know the lines to look for changes, you
-# already know a lot about the cause. Instead now, with the help of concepts
-# introduced in unit 5 (line coverage), improve this program to create
-# the locations list automatically, and then use it to print out only the
-# failure inducing lines, as before.
-# See some hints at the provided functions, and an example output at the end.
 import sys
 import copy
 #import time
@@ -33,10 +21,12 @@ def remove_html_markup(s):
             out = out + c
 
     return out
-    
+
+# ddmin is a delta debug function which searches for minimal
+# sets of inputs that causes failures on the provided 
+# functions every permutatuins of the inputs 
+
 def ddmin(s):
-    # you may need to use this to test if the values you pass actually make
-    # test fail.
     if test(s)=="PASS":
         return None
 
@@ -64,8 +54,9 @@ def ddmin(s):
     return s
 
 
-# Use this function to record the covered lines in the program, in order of
-# their execution and save in the list coverage
+# Use this function to record the covered lines in the 
+# program, in order of their execution and save in the 
+# list coverage
 coverage =[]
 def traceit(frame, event, arg):
     global coverage
@@ -74,7 +65,8 @@ def traceit(frame, event, arg):
         
     return traceit
 
-# We use these variables to communicate between callbacks and drivers
+# We use these variables to communicate between callbacks
+# and drivers
 the_line      = None
 the_iteration = None
 the_state     = None
@@ -91,10 +83,10 @@ def trace_fetch_state(frame, event, arg):
         the_iteration = the_iteration - 1
         if the_iteration == 0:
             the_state = copy.deepcopy(frame.f_locals)
-            if the_state==None:
+            if the_state==None:# Avoids returning empty list
                 the_state ={}
             the_line = None  # Don't get called again
-            return None      # Don't get called again
+            return None
 
     return trace_fetch_state
 
@@ -152,9 +144,9 @@ def test(diffs):
         return "FAIL"
 
 def make_locations(coverage):
-    # This function should return a list of tuples in the format
-    # [(line, iteration), (line, iteration) ...], as auto_cause_chain
-    # expects.
+    # This function returns a list of tuples in the format
+    # [(line, iteration), (line, iteration) ...], for 
+    # auto_cause_chain function's input
     locations=[]
     iter_num={}
     for ln in coverage:
@@ -167,12 +159,11 @@ def make_locations(coverage):
     return locations
 
 def auto_cause_chain(locations):
-    global html_fail, html_pass, the_input, the_line, the_iteration, the_diff
+    global html_fail, html_pass, the_input, the_line,\
+            the_iteration, the_diff
     print "The program was started with", repr(html_fail)
-    #print locations
     # Test over multiple locations
     causes =[]
-    cause_check={}
     diff_check={}
     line_check={}
     for (line, iteration) in locations:
@@ -186,13 +177,9 @@ def auto_cause_chain(locations):
         # Compute the differences
         diffs = []
 
-        # if state_pass is None:
-        #     state_pass={}
-        # if state_fail is None:
-        #     state_pass={}
-
         for var in state_fail:
-            if (var not in state_pass) or state_pass[var] != state_fail[var]:
+            if (var not in state_pass) or\
+             state_pass[var] != state_fail[var]:
                 diffs.append((var, state_fail[var]))
 
         the_input = html_pass
