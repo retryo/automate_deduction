@@ -27,6 +27,8 @@ def remove_html_markup(s):
 # functions every permutatuins of the inputs 
 
 def ddmin(s):
+    """Search 
+    """
     if test(s)=="PASS":
         return None
 
@@ -201,19 +203,22 @@ def auto_cause_chain(locations):
     print "Then the program failed."
 
 ###### Testing runs
-
 # We will test your function with different strings and on a different function      
 html_fail = '"<b>foo</b>"'
 html_pass = "'<b>foo</b>'"
-
-# This will fill the coverage variable with all lines executed in a
-# failing run
 coverage = []
-sys.settrace(traceit)
-remove_html_markup(html_fail)
-sys.settrace(None)
-locations = make_locations(coverage)
-auto_cause_chain(locations)
+def main():
+    global coverage
+    # This will fill the coverage variable with all lines executed in a
+    # failing run
+    sys.settrace(traceit)
+    remove_html_markup(html_fail)
+    sys.settrace(None)
+    locations = make_locations(coverage)
+    auto_cause_chain(locations)
+
+if __name__=='__main__':
+    main()
 """
 The program was started with '"<b>foo</b>"'
 Then s became '"<b>foo</b>"'
