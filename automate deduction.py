@@ -13,8 +13,8 @@
 # See some hints at the provided functions, and an example output at the end.
 import sys
 import copy
-import time
-start_time=time.time()
+#import time
+#start_time=time.time()
 #buggy program
 def remove_html_markup(s):
     tag   = False
@@ -37,7 +37,8 @@ def remove_html_markup(s):
 def ddmin(s):
     # you may need to use this to test if the values you pass actually make
     # test fail.
-    assert test(s) == "FAIL"
+    if test(s)=="PASS":
+        return None
 
     n = 2     # Initial granularity
     while len(s) >= 2:
@@ -90,6 +91,8 @@ def trace_fetch_state(frame, event, arg):
         the_iteration = the_iteration - 1
         if the_iteration == 0:
             the_state = copy.deepcopy(frame.f_locals)
+            if the_state==None:
+                the_state ={}
             the_line = None  # Don't get called again
             return None      # Don't get called again
 
@@ -149,7 +152,6 @@ def test(diffs):
         return "FAIL"
 
 def make_locations(coverage):
-    # YOUR CODE HERE
     # This function should return a list of tuples in the format
     # [(line, iteration), (line, iteration) ...], as auto_cause_chain
     # expects.
@@ -184,37 +186,30 @@ def auto_cause_chain(locations):
         # Compute the differences
         diffs = []
 
-        if state_pass is None:
-            state_pass={}
-        if state_fail is None:
-            state_pass={}
+        # if state_pass is None:
+        #     state_pass={}
+        # if state_fail is None:
+        #     state_pass={}
 
         for var in state_fail:
             if (var not in state_pass) or state_pass[var] != state_fail[var]:
                 diffs.append((var, state_fail[var]))
-        # Minimize the failure-inducing set of differences
-        # Since this time you have all the covered lines and iterations in
-        # locations, you will have to figure out how to automatically detect
-        # which lines/iterations are the ones that are part of the
-        # failure chain and print out only these.
+
         the_input = html_pass
         the_line  = line
         the_iteration  = iteration
-        try: 
-            if tuple(diffs) in diff_check:
-                continue
-            cause = ddmin(diffs)
-            if cause!=None:
-                line_check[line]=True 
-                diff_check[tuple(diffs)]=True
-                for c in cause:
-                    if c not in causes:
-                        causes.append(c)
-        except AssertionError:
-            pass
+
+        if tuple(diffs) in diff_check:
+            continue
+        cause = ddmin(diffs)
+        if cause!=None:
+            line_check[line]=True 
+            diff_check[tuple(diffs)]=True
+            for c in cause:
+                if c not in causes:
+                    causes.append(c)
 
     for var,val in causes:
-        #print var[0], val[1]
         print "Then", var, "became", repr(val)
     print "Then the program failed."
 
@@ -232,12 +227,6 @@ remove_html_markup(html_fail)
 sys.settrace(None)
 locations = make_locations(coverage)
 auto_cause_chain(locations)
-print("--- %s seconds ---" % (time.time() - start_time))
-# The coverage :
-# [8, 9, 10, 11, 12, 14, 16, 17, 11, 12... # and so on
-# The locations:
-# [(8, 1), (9, 1), (10, 1), (11, 1), (12, 1)...  # and so on
-# The output for the current program and test strings should look like follows:
 """
 The program was started with '"<b>foo</b>"'
 Then s became '"<b>foo</b>"'
