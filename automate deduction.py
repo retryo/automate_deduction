@@ -38,7 +38,7 @@ def ddmin(s):
     # you may need to use this to test if the values you pass actually make
     # test fail.
     assert test(s) == "FAIL"
-    
+
     n = 2     # Initial granularity
     while len(s) >= 2:
         start = 0
@@ -60,7 +60,6 @@ def ddmin(s):
             if n == len(s):
                 break
             n = min(n * 2, len(s))
-
     return s
 
 
@@ -173,15 +172,18 @@ def auto_cause_chain(locations):
     causes =[]
     cause_check={}
     diff_check={}
+    line_check={}
     for (line, iteration) in locations:
+        if line in line_check:
+            continue
+
         # Get the passing and the failing state
         state_pass = get_state(html_pass, line, iteration)
         state_fail = get_state(html_fail, line, iteration)
     
         # Compute the differences
         diffs = []
-        #print state_pass
-        #print state_fail,'\n\n'
+
         if state_pass is None:
             state_pass={}
         if state_fail is None:
@@ -199,22 +201,17 @@ def auto_cause_chain(locations):
         the_line  = line
         the_iteration  = iteration
         try: 
-            t_diffs =tuple(diffs)
-            if t_diffs in diff_check:
+            if tuple(diffs) in diff_check:
                 continue
             cause = ddmin(diffs)
             if cause!=None:
-                diff_check[t_diffs]=True
+                line_check[line]=True 
+                diff_check[tuple(diffs)]=True
                 for c in cause:
-                    if c not in cause_check:
-                        cause_check[c]=True
+                    if c not in causes:
                         causes.append(c)
         except AssertionError:
             pass
-        # You will have to use the following functions and output formatting:
-        #   cause = ddmin(diffs)
-        #    # Pretty output
-        #    print "Then", var, "became", repr(value)
 
     for var,val in causes:
         #print var[0], val[1]
@@ -233,9 +230,7 @@ coverage = []
 sys.settrace(traceit)
 remove_html_markup(html_fail)
 sys.settrace(None)
-
 locations = make_locations(coverage)
-
 auto_cause_chain(locations)
 print("--- %s seconds ---" % (time.time() - start_time))
 # The coverage :
