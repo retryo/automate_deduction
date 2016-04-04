@@ -1,9 +1,18 @@
 #!/usr/bin/env python
+"""Prints list of sequences that takes part in the failure.
+
+Example:
+    The program was started with '"<b>foo</b>"'
+    's' became '"<b>foo</b>"'
+    'c' became '"'
+    'quot'e became True
+    ...
+    Then the program failed.
+
+"""
+
 import sys
 import copy
-#import time
-#start_time=time.time()
-#buggy program
 def remove_html_markup(s):
     tag   = False
     quote = False
@@ -22,12 +31,16 @@ def remove_html_markup(s):
 
     return out
 
-# ddmin is a delta debug function which searches for minimal
-# sets of inputs that causes failures on the provided 
-# functions every permutatuins of the inputs 
 
 def ddmin(s):
-    """Search 
+    """Searches for minimal sets of inputs that causes failures.
+    Every permutatuins of the inputs are tested
+
+    Args:
+        s(list):A list of local variables that are suspect for failure
+    Returns:
+        Minimal list of variables that causes failures.
+        Returns none if none of the variables cause failure.
     """
     if test(s)=="PASS":
         return None
@@ -61,6 +74,10 @@ def ddmin(s):
 # list coverage
 coverage =[]
 def traceit(frame, event, arg):
+    """Trace function for settrace in sys module.
+     Populates coverage, which is a list of covered lines.
+
+    """
     global coverage
     if event =='line':
         coverage.append(frame.f_lineno)
@@ -77,6 +94,11 @@ the_input     = None
 
 # Stop at THE_LINE/THE_ITERATION and store the state in THE_STATE
 def trace_fetch_state(frame, event, arg):
+    """Trace function for settrace in sys module.
+    Copies the local variables at line and iteration numbers.
+    the_line defines line and the_iteration defines iteration number
+
+    """
     global the_line
     global the_iteration
     global the_state
@@ -92,8 +114,12 @@ def trace_fetch_state(frame, event, arg):
 
     return trace_fetch_state
 
-# Get the state at LINE/ITERATION
+
 def get_state(input, line, iteration):
+    """Retrieves local variables at provided line and iteration number.
+
+
+    """
     global the_line
     global the_iteration
     global the_state
@@ -121,9 +147,11 @@ def trace_apply_diff(frame, event, arg):
     
     return trace_apply_diff
     
-# Testing function: Call remove_html_output, stop at THE_LINE/THE_ITERATION, 
-# and apply the diffs in DIFFS at THE_LINE
+
 def test(diffs):
+    """Call remove_html_output, stop at the_line/the_iteration,
+    and apply the diffs in diffs at the_line.
+    """
     global the_diff
     global the_input
     global the_line
@@ -199,7 +227,8 @@ def auto_cause_chain(locations):
                     causes.append(c)
 
     for var,val in causes:
-        print "Then", var, "became", repr(val)
+        s = repr(var) + " became " + repr(val)
+        print s
     print "Then the program failed."
 
 ###### Testing runs
@@ -216,13 +245,6 @@ def main():
     sys.settrace(None)
     locations = make_locations(coverage)
     auto_cause_chain(locations)
-
-if __name__=='__main__':
+if __name__ == '__main__':
     main()
-"""
-The program was started with '"<b>foo</b>"'
-Then s became '"<b>foo</b>"'
-Then c became '"'
-Then quote became True
-...
-"""
+
