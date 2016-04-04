@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-"""Prints list of sequences that takes part in the failure.
+"""Prints list of sequences that takes part in the failure of the program.
 
 Example:
     The program was started with '"<b>foo</b>"'
@@ -69,9 +69,6 @@ def ddmin(s):
     return s
 
 
-# Use this function to record the covered lines in the 
-# program, in order of their execution and save in the 
-# list coverage
 coverage =[]
 def traceit(frame, event, arg):
     """Trace function for settrace in sys module.
@@ -116,9 +113,8 @@ def trace_fetch_state(frame, event, arg):
 
 
 def get_state(input, line, iteration):
-    """Retrieves local variables at provided line and iteration number.
-
-
+    """Retrieves local variables at provided line and
+    iteration number.
     """
     global the_line
     global the_iteration
@@ -134,6 +130,10 @@ def get_state(input, line, iteration):
 
 # Stop at THE_LINE/THE_ITERATION and apply the differences in THE_DIFF 
 def trace_apply_diff(frame, event, arg):
+    """Execute the function until the_line/the_iteration
+    and apply change into local variables and change its
+    content at the_diff
+    """
     global the_line
     global the_diff
     global the_iteration
@@ -149,7 +149,7 @@ def trace_apply_diff(frame, event, arg):
     
 
 def test(diffs):
-    """Call remove_html_output, stop at the_line/the_iteration,
+    """Call the function, stop at the_line/the_iteration,
     and apply the diffs in diffs at the_line.
     """
     global the_diff
@@ -174,9 +174,10 @@ def test(diffs):
         return "FAIL"
 
 def make_locations(coverage):
-    # This function returns a list of tuples in the format
-    # [(line, iteration), (line, iteration) ...], for 
-    # auto_cause_chain function's input
+    """This function returns a list of tuples in the format
+    [(line, iteration), (line, iteration) ...], for 
+    auto_cause_chain function's input
+    """
     locations=[]
     iter_num={}
     for ln in coverage:
@@ -189,6 +190,12 @@ def make_locations(coverage):
     return locations
 
 def auto_cause_chain(locations):
+    """Deduces list of sequences that takes part in the 
+    failure of the program by getting the difference of 
+    variables in the failing run and passing run and
+    applying the differences and narrow down the variables
+    that may partake in the programs failure.
+    """
     global html_fail, html_pass, the_input, the_line,\
             the_iteration, the_diff
     print "The program was started with", repr(html_fail)
@@ -238,8 +245,6 @@ html_pass = "'<b>foo</b>'"
 coverage = []
 def main():
     global coverage
-    # This will fill the coverage variable with all lines executed in a
-    # failing run
     sys.settrace(traceit)
     remove_html_markup(html_fail)
     sys.settrace(None)
