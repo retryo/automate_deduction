@@ -1,11 +1,15 @@
 #!/usr/bin/env python
-"""Prints list of sequences that takes part in the failure of the program.
+"""Prints list of sequences that takes part in the failure
+of the program. This program is only a demonstration code 
+at this time. It will be expanded into a code that can be
+imported into a program in the near future. Code is adapted
+from Andreas Zeller.
 
 Example:
     The program was started with '"<b>foo</b>"'
     's' became '"<b>foo</b>"'
     'c' became '"'
-    'quot'e became True
+    'quote' became True
     ...
     Then the program failed.
 
